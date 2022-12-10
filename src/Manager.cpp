@@ -56,6 +56,9 @@ void Manager::LoadSettings()
 
 	ini.LoadFile(path);
 
+	ini::get_value(ini, dumpGoodNifs, "Debug", "DumpGoodParticles", ";Dump processed particle systems and their types to log");
+	ini::get_value(ini, dumpBadNifs, "Debug", "DumpBadParticles", ";Dump skipped particle systems to log");
+
 	ini::get_value(ini, candle.windStrength, "Wind Strength", "Candle", nullptr);
 	ini::get_value(ini, fire.windStrength, "Wind Strength", "Fire", nullptr);
 	ini::get_value(ini, smoke.windStrength, "Wind Strength", "Smoke", nullptr);
@@ -70,7 +73,7 @@ void Manager::LoadOverrides()
 {
 	logger::info("{:*^30}", "CONFIGS");
 
-    std::vector<std::string> configs;
+	std::vector<std::string> configs;
 
 	const std::filesystem::path folderPath{ R"(Data\ParticleWind)" };
 	const std::filesystem::directory_entry directory{ folderPath };
@@ -110,7 +113,7 @@ void Manager::LoadOverrides()
 
 		if (const auto values = ini.GetSection("Whitelist"); values && !values->empty()) {
 			logger::info("\t\t{} whitelist entries", values->size());
-		    for (const auto& key : *values | std::views::keys) {
+			for (const auto& key : *values | std::views::keys) {
 				std::string entry{ key.pItem };
 				string::trim(entry);
 				SanitizePath(entry);
@@ -125,7 +128,7 @@ void Manager::LoadOverrides()
 				std::string entry{ key.pItem };
 				string::trim(entry);
 
-			    auto splitEntry = string::split(entry, "|");
+				auto splitEntry = string::split(entry, "|");
 				SanitizePath(splitEntry[0]);
 
 				overrides.emplace(splitEntry[0], string::to_num<float>(splitEntry[1]));
@@ -136,7 +139,7 @@ void Manager::LoadOverrides()
 
 Manager::Manager()
 {
-    LoadSettings();
+	LoadSettings();
 	LoadOverrides();
 }
 
@@ -154,20 +157,24 @@ std::string& Manager::SanitizePath(std::string& a_string)
 
 float Manager::GetParticleWind(const std::string& a_nifPath, RE::NiParticleSystem* a_particleSystem)
 {
+	static Map<std::string, Set<std::string>> goodNifs;
+	static Map<std::string, Set<std::string>> badNifs;
+
 	if (const auto it = overrides.find(a_nifPath); it != overrides.end()) {
 		return it->second;
 	}
 
-    if (const auto it = whiteList.find(a_nifPath); it != whiteList.end()) {
+	if (const auto it = whiteList.find(a_nifPath); it != whiteList.end()) {
 		if (const auto particleType = Particle::GetType(a_particleSystem); particleType != Particle::TYPE::kNone) {
-			/*static Map<std::string, Set<std::string>> goodNifs;
-			if (!goodNifs.contains(a_nifPath)) {
-				logger::info("GOOD : {}", a_nifPath);
+			if (dumpGoodNifs) {
+				if (!goodNifs.contains(a_nifPath)) {
+					logger::info("GOOD : {}", a_nifPath);
+				}
+				if (!goodNifs[a_nifPath].contains(a_particleSystem->name.c_str())) {
+					logger::info("\t{} : {}", a_particleSystem->name, types[particleType]);
+					goodNifs[a_nifPath].emplace(a_particleSystem->name.c_str());
+				}
 			}
-			if (!goodNifs[a_nifPath].contains(a_particleSystem->name.c_str())) {
-				logger::info("\t{} : {}", a_particleSystem->name, types[particleType]);
-				goodNifs[a_nifPath].emplace(a_particleSystem->name.c_str());
-			}*/
 			switch (particleType) {
 			case Particle::TYPE::kMisc:
 				return misc.windStrength;
@@ -185,16 +192,16 @@ float Manager::GetParticleWind(const std::string& a_nifPath, RE::NiParticleSyste
 				return 0.0f;
 			}
 		}
-	} else {
-		/*static Set<std::string> badNifs;
-		if (a_particleSystem->isWorldspace) {
-			if (!badNifs.contains(a_nifPath)) {
-				logger::info("BAD : {}", a_nifPath);
-				badNifs.emplace(a_nifPath);
-			}
-			if (!badNifs[a_nifPath].contains(a_particleSystem->name.c_str())) {
+	}
+
+	if (dumpBadNifs) {
+		if (!badNifs.contains(a_nifPath)) {
+			logger::info("BAD : {}", a_nifPath);
+		}
+		if (!badNifs[a_nifPath].contains(a_particleSystem->name.c_str())) {
+			badNifs[a_nifPath].emplace(a_particleSystem->name.c_str());
 			logger::info("\t{}", a_particleSystem->name);
-		}*/
+		}
 	}
 
 	return 0.0f;

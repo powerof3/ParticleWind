@@ -49,6 +49,9 @@ private:
 	void LoadOverrides();
 
 	// members
+	bool dumpGoodNifs{ false };
+	bool dumpBadNifs{ false };
+
 	Particle candle{ 5.0f };
 	Particle fire{ 5.0f };
 	Particle smoke{ 5.0f };
