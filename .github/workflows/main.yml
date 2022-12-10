@@ -13,9 +13,9 @@ jobs:
   run:
     uses: adya/pack-skse-mod/.github/workflows/pack.yml@main
     with:
-      FOMOD_MOD_NAME: "Enemy Friendly Fire"
+      FOMOD_MOD_NAME: "Particle Wind"
       FOMOD_MOD_AUTHOR: "powerofthree"
-      FOMOD_MOD_NEXUS_ID: "50483"
+      FOMOD_MOD_NEXUS_ID: "0"
       FOMOD_SE_MIN_GAME_VERSION: '1.5'
       FOMOD_AE_NAME: 'SSE v1.6+ ("Anniversary Edition")'
       FOMOD_AE_DESCR: 'Select this if you are using Skyrim Anniversary Edition v1.6 or higher.'
