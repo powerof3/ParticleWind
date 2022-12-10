@@ -38,5 +38,6 @@ namespace Wind
 	void Install()
 	{
 		stl::write_vfunc<PostCreate>(RE::VTABLE_TESModelDB____TESProcessor[0]);
+		logger::info("Installed TESModelDB::TESProcessor hook");
 	}
 }

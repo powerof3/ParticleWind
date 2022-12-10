@@ -68,7 +68,9 @@ void Manager::LoadSettings()
 
 void Manager::LoadOverrides()
 {
-	std::vector<std::string> configs;
+	logger::info("{:*^30}", "CONFIGS");
+
+    std::vector<std::string> configs;
 
 	const std::filesystem::path folderPath{ R"(Data\ParticleWind)" };
 	const std::filesystem::directory_entry directory{ folderPath };
@@ -86,16 +88,16 @@ void Manager::LoadOverrides()
 	}
 
 	if (configs.empty()) {
-		logger::info("No configs found within {}", folderPath.string());
+		logger::info("No configs found within {}...", folderPath.string());
 		return;
 	}
 
 	std::ranges::sort(configs);
 
-	logger::info("{} matching inis found", configs.size());
+	logger::info("{} configs found in {}", configs.size(), folderPath.string());
 
 	for (auto& path : configs) {
-		logger::info("	INI : {}", path);
+		logger::info("\tINI : {}", path);
 
 		CSimpleIniA ini;
 		ini.SetUnicode();
@@ -107,7 +109,8 @@ void Manager::LoadOverrides()
 		}
 
 		if (const auto values = ini.GetSection("Whitelist"); values && !values->empty()) {
-			for (const auto& key : *values | std::views::keys) {
+			logger::info("\t\t{} whitelist entries", values->size());
+		    for (const auto& key : *values | std::views::keys) {
 				std::string entry{ key.pItem };
 				string::trim(entry);
 				SanitizePath(entry);
@@ -120,7 +123,7 @@ void Manager::LoadOverrides()
 
 Manager::Manager()
 {
-	LoadSettings();
+    LoadSettings();
 	LoadOverrides();
 }
 

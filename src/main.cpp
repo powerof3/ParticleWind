@@ -3,6 +3,7 @@
 void OnInit(SKSE::MessagingInterface::Message* a_msg)
 {
 	if (a_msg->type == SKSE::MessagingInterface::kPostLoad) {
+		logger::info("{:*^30}", "HOOKS");
 	    Wind::Install();
 	}
 }
@@ -57,7 +58,7 @@ void InitializeLog()
 	log->flush_on(spdlog::level::info);
 
 	spdlog::set_default_logger(std::move(log));
-	spdlog::set_pattern("%v"s);
+	spdlog::set_pattern("[%H:%M:%S] %v"s);
 
 	logger::info(FMT_STRING("{} v{}"), Version::PROJECT, Version::NAME);
 }
