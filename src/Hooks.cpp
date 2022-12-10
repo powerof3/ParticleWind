@@ -22,7 +22,7 @@ namespace Wind
 		    RE::BSVisit::TraverseScenegraphGeometries(a_root.get(), [&](RE::BSGeometry* a_geo) {
 		        if (const auto particleSystem = netimmerse_cast<RE::NiParticleSystem*>(a_geo)) {
 		            const float strength = manager->GetParticleWind(nifPath, particleSystem);
-					if (strength > 0.0f) {
+					if (strength != 0.0f) {
 						if (const auto newWindObject = RE::BSWindModifier::Create("ParticleWind"sv, strength)) {
 							particleSystem->AddModifier(newWindObject);
 						}

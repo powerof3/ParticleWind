@@ -57,6 +57,7 @@ private:
 	Particle misc{ 5.0f };
 
 	Set<std::string> whiteList{};
+	Map<std::string, float> overrides{};
 
 	Map<Particle::TYPE, std::string> types{
 		{ Particle::TYPE::kNone, "None" },

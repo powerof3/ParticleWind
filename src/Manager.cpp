@@ -118,6 +118,19 @@ void Manager::LoadOverrides()
 				whiteList.emplace(entry);
 			}
 		}
+
+		if (const auto values = ini.GetSection("Override"); values && !values->empty()) {
+			logger::info("\t\t{} override entries", values->size());
+			for (const auto& key : *values | std::views::keys) {
+				std::string entry{ key.pItem };
+				string::trim(entry);
+
+			    auto splitEntry = string::split(entry, "|");
+				SanitizePath(splitEntry[0]);
+
+				overrides.emplace(splitEntry[0], string::to_num<float>(splitEntry[1]));
+			}
+		}
 	}
 }
 
@@ -141,7 +154,11 @@ std::string& Manager::SanitizePath(std::string& a_string)
 
 float Manager::GetParticleWind(const std::string& a_nifPath, RE::NiParticleSystem* a_particleSystem)
 {
-	if (const auto it = whiteList.find(a_nifPath); it != whiteList.end()) {
+	if (const auto it = overrides.find(a_nifPath); it != overrides.end()) {
+		return it->second;
+	}
+
+    if (const auto it = whiteList.find(a_nifPath); it != whiteList.end()) {
 		if (const auto particleType = Particle::GetType(a_particleSystem); particleType != Particle::TYPE::kNone) {
 			/*static Map<std::string, Set<std::string>> goodNifs;
 			if (!goodNifs.contains(a_nifPath)) {
