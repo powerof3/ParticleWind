@@ -60,7 +60,7 @@ void Manager::LoadSettings()
 	ini::get_value(ini, fire.windStrength, "Wind Strength", "Fire", nullptr);
 	ini::get_value(ini, smoke.windStrength, "Wind Strength", "Smoke", nullptr);
 	ini::get_value(ini, sparks.windStrength, "Wind Strength", "Sparks", nullptr);
-	ini::get_value(ini, sparks.windStrength, "Wind Strength", "Steam", nullptr);
+	ini::get_value(ini, steam.windStrength, "Wind Strength", "Steam", nullptr);
 	ini::get_value(ini, misc.windStrength, "Wind Strength", "Misc", nullptr);
 
 	(void)ini.SaveFile(path);
