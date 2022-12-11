@@ -127,11 +127,20 @@ void Manager::LoadOverrides()
 			for (const auto& key : *values | std::views::keys) {
 				std::string entry{ key.pItem };
 				string::trim(entry);
-
 				auto splitEntry = string::split(entry, "|");
-				SanitizePath(splitEntry[0]);
 
-				overrides.emplace(splitEntry[0], string::to_num<float>(splitEntry[1]));
+				auto& nifPath = splitEntry[0];
+				SanitizePath(nifPath);
+
+				auto& particleEntries = splitEntry[1];
+				SanitizeString(particleEntries);
+
+				auto windStrength = string::to_num<float>(splitEntry[2]);
+
+			    auto particlesEntry = string::split(particleEntries, ",");
+				for (auto& particle : particlesEntry) {
+					overrides[nifPath].emplace(particle, windStrength);
+				}
 			}
 		}
 	}
@@ -143,10 +152,15 @@ Manager::Manager()
 	LoadOverrides();
 }
 
-std::string& Manager::SanitizePath(std::string& a_string)
+void Manager::SanitizeString(std::string& a_string)
 {
 	std::ranges::transform(a_string, a_string.begin(),
 		[](unsigned char c) { return static_cast<unsigned char>(std::tolower(c)); });
+}
+
+std::string& Manager::SanitizePath(std::string& a_string)
+{
+	SanitizeString(a_string);
 
 	a_string = srell::regex_replace(a_string, srell::regex(R"(/+|\\+)"), R"(\)");
 	a_string = srell::regex_replace(a_string, srell::regex(R"(^\\+)"), "");
@@ -161,7 +175,20 @@ float Manager::GetParticleWind(const std::string& a_nifPath, RE::NiParticleSyste
 	static Map<std::string, Set<std::string>> badNifs;
 
 	if (const auto it = overrides.find(a_nifPath); it != overrides.end()) {
-		return it->second;
+		std::string particleSysName{ a_particleSystem->name.c_str() };
+		SanitizeString(particleSysName);
+	    if (const auto pIt = it->second.find(particleSysName); pIt != it->second.end()) {
+			if (dumpGoodNifs) {
+				if (!goodNifs.contains(a_nifPath)) {
+					logger::info("OVERRIDE : {}", a_nifPath);
+				}
+				if (!goodNifs[a_nifPath].contains(a_particleSystem->name.c_str())) {
+					logger::info("\t{} : {}", a_particleSystem->name, pIt->second);
+					goodNifs[a_nifPath].emplace(a_particleSystem->name.c_str());
+				}
+			}
+	        return pIt->second;
+	    }
 	}
 
 	if (const auto it = whiteList.find(a_nifPath); it != whiteList.end()) {
