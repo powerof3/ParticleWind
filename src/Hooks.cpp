@@ -13,15 +13,21 @@ namespace Wind
 				return;
 			}
 
-			// a_nifPath is nullptr for some meshes. why? todd only knows
-			std::string nifPath = string::is_empty(a_nifPath) ? a_root->name.c_str() : a_nifPath;
-			Manager::SanitizePath(nifPath);
+			std::string nifPath = !string::is_empty(a_nifPath) ? a_nifPath : a_root->name.c_str();
+			std::string nifName = a_root->name.c_str();
+
+			if (nifPath.empty()) {
+				nifPath = nifName;
+			}
+
+		    Manager::SanitizePath(nifPath);
+			Manager::SanitizePath(nifName);
 
 			const auto manager = Manager::GetSingleton();
 
 		    RE::BSVisit::TraverseScenegraphGeometries(a_root.get(), [&](RE::BSGeometry* a_geo) {
 		        if (const auto particleSystem = netimmerse_cast<RE::NiParticleSystem*>(a_geo)) {
-		            const float strength = manager->GetParticleWind(nifPath, particleSystem);
+					const float strength = manager->GetParticleWind(nifPath, nifName, particleSystem);
 					if (strength != 0.0f) {
 						if (const auto newWindObject = RE::BSWindModifier::Create("ParticleWind"sv, strength)) {
 							particleSystem->AddModifier(newWindObject);

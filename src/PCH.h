@@ -35,6 +35,13 @@ namespace stl
 		REL::Relocation<std::uintptr_t> vtbl{ a_src };
 		T::func = vtbl.write_vfunc(T::size, T::thunk);
 	}
+
+	template <class F,class T>
+	void write_vfunc()
+	{
+		REL::Relocation<std::uintptr_t> vtbl{ F::VTABLE[0] };
+		T::func = vtbl.write_vfunc(T::size, T::thunk);
+	}
 }
 
 #include "Version.h"

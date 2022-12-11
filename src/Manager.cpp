@@ -39,7 +39,7 @@ Particle::TYPE Particle::GetType(RE::NiParticleSystem* a_particleSystem)
 		if (sourceTexture.contains("iceshards") || sourceTexture.contains("spark")) {
 			return TYPE::kSparks;
 		}
-		if (sourceTexture.contains("glow") || sourceTexture.contains("fxwhiteflare")) {
+		if (sourceTexture.contains("enbl") || sourceTexture.contains("glow") || sourceTexture.contains("fxwhiteflare")) {
 			return TYPE::kNone;
 		}
 	}
@@ -169,42 +169,51 @@ std::string& Manager::SanitizePath(std::string& a_string)
 	return a_string;
 }
 
-float Manager::GetParticleWind(const std::string& a_nifPath, RE::NiParticleSystem* a_particleSystem)
+float Manager::GetParticleWind(const std::string& a_nifPath, const std::string& a_nifName, RE::NiParticleSystem* a_particleSystem)
 {
 	static Map<std::string, Set<std::string>> goodNifs;
-	static Map<std::string, Set<std::string>> badNifs;
 
-	if (const auto it = overrides.find(a_nifPath); it != overrides.end()) {
+    auto oIt = overrides.find(a_nifPath);
+	if (oIt == overrides.end() && a_nifPath != a_nifName) {
+		oIt = overrides.find(a_nifName);
+	}
+
+	if (oIt != overrides.end()) {
 		std::string particleSysName{ a_particleSystem->name.c_str() };
 		SanitizeString(particleSysName);
-	    if (const auto pIt = it->second.find(particleSysName); pIt != it->second.end()) {
+		if (const auto pIt = oIt->second.find(particleSysName); pIt != oIt->second.end()) {
 			if (dumpGoodNifs) {
-				if (!goodNifs.contains(a_nifPath)) {
-					logger::info("OVERRIDE : {}", a_nifPath);
+				auto& path = oIt->first;
+				if (!goodNifs.contains(path)) {
+					logger::info("OVERRIDE : {}", path);
 				}
-				if (!goodNifs[a_nifPath].contains(a_particleSystem->name.c_str())) {
+				if (!goodNifs[path].contains(a_particleSystem->name.c_str())) {
 					logger::info("\t{} : {}", a_particleSystem->name, pIt->second);
-					goodNifs[a_nifPath].emplace(a_particleSystem->name.c_str());
+					goodNifs[path].emplace(a_particleSystem->name.c_str());
 				}
 			}
 	        return pIt->second;
 	    }
 	}
 
-	if (const auto it = whiteList.find(a_nifPath); it != whiteList.end()) {
+	auto wIt = whiteList.find(a_nifPath);
+	if (wIt == whiteList.end() && a_nifPath != a_nifName) {
+		wIt = whiteList.find(a_nifName);
+	}
+
+	if (wIt != whiteList.end()) {
 		if (const auto particleType = Particle::GetType(a_particleSystem); particleType != Particle::TYPE::kNone) {
 			if (dumpGoodNifs) {
-				if (!goodNifs.contains(a_nifPath)) {
-					logger::info("GOOD : {}", a_nifPath);
+				auto& path = *wIt;
+				if (!goodNifs.contains(path)) {
+					logger::info("GOOD : {}", path);
 				}
-				if (!goodNifs[a_nifPath].contains(a_particleSystem->name.c_str())) {
-					logger::info("\t{} : {}", a_particleSystem->name, types[particleType]);
-					goodNifs[a_nifPath].emplace(a_particleSystem->name.c_str());
+				if (!goodNifs[path].contains(a_particleSystem->name.c_str())) {
+						logger::info("\t{} : {}", a_particleSystem->name, types[particleType]);
+				    goodNifs[path].emplace(a_particleSystem->name.c_str());
 				}
 			}
 			switch (particleType) {
-			case Particle::TYPE::kMisc:
-				return misc.windStrength;
 			case Particle::TYPE::kCandle:
 				return candle.windStrength;
 			case Particle::TYPE::kFire:
@@ -215,6 +224,8 @@ float Manager::GetParticleWind(const std::string& a_nifPath, RE::NiParticleSyste
 				return sparks.windStrength;
 			case Particle::TYPE::kSteam:
 				return steam.windStrength;
+			case Particle::TYPE::kMisc:
+				return misc.windStrength;
 			default:
 				return 0.0f;
 			}
@@ -222,7 +233,8 @@ float Manager::GetParticleWind(const std::string& a_nifPath, RE::NiParticleSyste
 	}
 
 	if (dumpBadNifs) {
-		if (!badNifs.contains(a_nifPath)) {
+        static Map<std::string, Set<std::string>> badNifs;
+        if (!badNifs.contains(a_nifPath)) {
 			logger::info("BAD : {}", a_nifPath);
 		}
 		if (!badNifs[a_nifPath].contains(a_particleSystem->name.c_str())) {

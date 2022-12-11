@@ -6,12 +6,12 @@ public:
 	enum class TYPE
 	{
 		kNone = 0,
-		kMisc,
 		kCandle,
 		kFire,
 		kSmoke,
 		kSparks,
-		kSteam
+		kSteam,
+		kMisc
 	};
 
 	explicit Particle(float a_windStrength);
@@ -34,7 +34,7 @@ public:
 	static void SanitizeString(std::string& a_string);
 	static std::string& SanitizePath(std::string& a_string);
 
-	float GetParticleWind(const std::string& a_nifPath, RE::NiParticleSystem* a_particleSystem);
+	float GetParticleWind(const std::string& a_nifPath, const std::string& a_nifName, RE::NiParticleSystem* a_particleSystem);
 
 private:
 	Manager();
