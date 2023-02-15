@@ -4,19 +4,28 @@ Particle::Particle(float a_windStrength) :
 	windStrength(a_windStrength)
 {}
 
-Particle::TYPE Particle::GetType(RE::NiParticleSystem* a_particleSystem)
+void Particle::ForEachModifier(const RE::NiParticleSystem* a_particleSystem, std::function<bool(RE::NiPSysModifier*)> a_callback)
 {
-	// skip if existing wind modifier is found
-	// iterate from end, BSWindModifier is one of the last modifiers in list
-	// tbd : write iterators for NiTList in clib
 	auto tail = a_particleSystem->modifierList.tail;
 	while (tail != nullptr) {
-		if (const auto& element = tail->element) {
-			if (netimmerse_cast<RE::BSWindModifier*>(element.get())) {
-				return TYPE::kNone;
-			}
+		if (const auto& element = tail->element; element && a_callback(element.get()) == false) {
+			break;
 		}
 		tail = tail->prev;
+	}
+}
+
+Particle::TYPE Particle::GetType(const RE::NiParticleSystem* a_particleSystem)
+{
+	bool has_existing_wind_modifier{ false };
+
+    ForEachModifier(a_particleSystem, [&](RE::NiPSysModifier* a_modifier) {
+		has_existing_wind_modifier = netimmerse_cast<RE::BSWindModifier*>(a_modifier);
+		return !has_existing_wind_modifier;
+	});
+
+	if (has_existing_wind_modifier) {
+	    return TYPE::kNone;
 	}
 
 	const auto effect = a_particleSystem->properties[RE::BSGeometry::States::kEffect].get();
@@ -137,7 +146,7 @@ void Manager::LoadOverrides()
 
 				auto windStrength = string::to_num<float>(splitEntry[2]);
 
-			    auto particlesEntry = string::split(particleEntries, ",");
+				auto particlesEntry = string::split(particleEntries, ",");
 				for (auto& particle : particlesEntry) {
 					overrides[nifPath].emplace(particle, windStrength);
 				}
@@ -173,7 +182,7 @@ float Manager::GetParticleWind(const std::string& a_nifPath, const std::string& 
 {
 	static Map<std::string, Set<std::string>> goodNifs;
 
-    auto oIt = overrides.find(a_nifPath);
+	auto oIt = overrides.find(a_nifPath);
 	if (oIt == overrides.end() && a_nifPath != a_nifName) {
 		oIt = overrides.find(a_nifName);
 	}
@@ -192,8 +201,8 @@ float Manager::GetParticleWind(const std::string& a_nifPath, const std::string& 
 					goodNifs[path].emplace(a_particleSystem->name.c_str());
 				}
 			}
-	        return pIt->second;
-	    }
+			return pIt->second;
+		}
 	}
 
 	auto wIt = whiteList.find(a_nifPath);
@@ -209,8 +218,8 @@ float Manager::GetParticleWind(const std::string& a_nifPath, const std::string& 
 					logger::info("GOOD : {}", path);
 				}
 				if (!goodNifs[path].contains(a_particleSystem->name.c_str())) {
-						logger::info("\t{} : {}", a_particleSystem->name, types[particleType]);
-				    goodNifs[path].emplace(a_particleSystem->name.c_str());
+					logger::info("\t{} : {}", a_particleSystem->name, types[particleType]);
+					goodNifs[path].emplace(a_particleSystem->name.c_str());
 				}
 			}
 			switch (particleType) {
@@ -233,8 +242,8 @@ float Manager::GetParticleWind(const std::string& a_nifPath, const std::string& 
 	}
 
 	if (dumpBadNifs) {
-        static Map<std::string, Set<std::string>> badNifs;
-        if (!badNifs.contains(a_nifPath)) {
+		static Map<std::string, Set<std::string>> badNifs;
+		if (!badNifs.contains(a_nifPath)) {
 			logger::info("BAD : {}", a_nifPath);
 		}
 		if (!badNifs[a_nifPath].contains(a_particleSystem->name.c_str())) {

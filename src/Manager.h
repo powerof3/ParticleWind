@@ -16,7 +16,8 @@ public:
 
 	explicit Particle(float a_windStrength);
 
-	static TYPE GetType(RE::NiParticleSystem* a_particleSystem);
+	static TYPE GetType(const RE::NiParticleSystem* a_particleSystem);
+	static void ForEachModifier(const RE::NiParticleSystem* a_particleSystem, std::function<bool(RE::NiPSysModifier*)> a_callback);
 
 	// member
 	float windStrength;

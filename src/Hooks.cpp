@@ -3,7 +3,22 @@
 
 namespace Wind
 {
-    struct PostCreate
+	void RemoveFakeWind(const RE::NiParticleSystem* a_particleSystem)
+	{
+		Particle::ForEachModifier(a_particleSystem, [](const RE::NiPSysModifier* a_modifier) {
+            if (const auto gravModifier = netimmerse_cast<RE::NiPSysGravityModifier*>(a_modifier)) {
+				if (const auto node = gravModifier->gravityObj) {
+					if (const auto controller = node->GetControllers(); controller && controller->IsTransformController()) {
+					    controller->flags.reset(RE::NiTimeController::Flag::kActive);
+					    gravModifier->strength *= 0.5f;
+					}
+				}
+			}
+			return true;
+		});
+	}
+
+	struct PostCreate
 	{
 		static void thunk(std::uintptr_t a_this, std::uintptr_t a_modelData, const char* a_nifPath, RE::NiPointer<RE::NiNode>& a_root, std::uint32_t& a_typeOut)
 		{
@@ -20,16 +35,17 @@ namespace Wind
 				nifPath = nifName;
 			}
 
-		    Manager::SanitizePath(nifPath);
+			Manager::SanitizePath(nifPath);
 			Manager::SanitizePath(nifName);
 
 			const auto manager = Manager::GetSingleton();
 
-		    RE::BSVisit::TraverseScenegraphGeometries(a_root.get(), [&](RE::BSGeometry* a_geo) {
-		        if (const auto particleSystem = netimmerse_cast<RE::NiParticleSystem*>(a_geo)) {
+			RE::BSVisit::TraverseScenegraphGeometries(a_root.get(), [&](RE::BSGeometry* a_geo) {
+				if (const auto particleSystem = netimmerse_cast<RE::NiParticleSystem*>(a_geo)) {
 					const float strength = manager->GetParticleWind(nifPath, nifName, particleSystem);
 					if (strength != 0.0f) {
 						if (const auto newWindObject = RE::BSWindModifier::Create("ParticleWind"sv, strength)) {
+							RemoveFakeWind(particleSystem);
 							particleSystem->AddModifier(newWindObject);
 						}
 					}
