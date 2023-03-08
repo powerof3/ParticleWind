@@ -29,13 +29,6 @@ namespace stl
 {
 	using namespace SKSE::stl;
 
-	template <class T>
-	void write_vfunc(REL::ID a_src)
-	{
-		REL::Relocation<std::uintptr_t> vtbl{ a_src };
-		T::func = vtbl.write_vfunc(T::size, T::thunk);
-	}
-
 	template <class F,class T>
 	void write_vfunc()
 	{

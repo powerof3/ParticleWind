@@ -20,9 +20,9 @@ namespace Wind
 
 	struct PostCreate
 	{
-		static void thunk(std::uintptr_t a_this, std::uintptr_t a_modelData, const char* a_nifPath, RE::NiPointer<RE::NiNode>& a_root, std::uint32_t& a_typeOut)
+		static void thunk(RE::TESModelDB::TESProcessor* a_this, const RE::BSModelDB::DBTraits::ArgsType& a_args, const char* a_nifPath, RE::NiPointer<RE::NiNode>& a_root, std::uint32_t& a_typeOut)
 		{
-			func(a_this, a_modelData, a_nifPath, a_root, a_typeOut);
+			func(a_this, a_args, a_nifPath, a_root, a_typeOut);
 
 			if (!a_root) {
 				return;
@@ -59,7 +59,7 @@ namespace Wind
 
 	void Install()
 	{
-		stl::write_vfunc<PostCreate>(RE::VTABLE_TESModelDB____TESProcessor[0]);
+		stl::write_vfunc<RE::TESModelDB::TESProcessor, PostCreate>();
 		logger::info("Installed TESModelDB::TESProcessor hook");
 	}
 }
